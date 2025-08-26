@@ -24,13 +24,21 @@ Milestone 1：基礎環境與 OAuth ✅ COMPLETED
 
 ⸻
 
-Milestone 2：Drive API 整合
-	•	實作 Drive API 列檔功能（只抓第一層，不遞迴）
-	•	支援 supportsAllDrives/includeItemsFromAllDrives 參數
-	•	實作單檔案下載（get?alt=media）與 Google Docs 匯出（/export）
-	•	UI 上能顯示檔案清單、大小、MIME type
+Milestone 2：Drive API 整合 ✅ COMPLETED
+	•	✅ Drive API 檔案列表功能（支援 supportsAllDrives/includeItemsFromAllDrives）
+	•	✅ 單檔案下載、Google Docs 匯出
+	•	✅ UI 顯示檔案清單、大小、MIME type
+	•	✅ 全選/取消全選功能，支援多檔案操作
+	•	✅ Google OAuth scope 已調整為 drive.readonly，能正確取得所有檔案
 
-👉 交付：能選取一個 Folder，顯示檔案清單並下載檔案（暫存於前端記憶體）。
+👉 交付：可選取資料夾，顯示檔案清單，支援全選與下載
+
+測試結果（2025-08-26）：
+- ✅ OAuth scope 驗證：drive.readonly
+- ✅ Drive API 回傳正確檔案清單
+- ✅ 全選/取消全選功能正常
+- ✅ 單檔案下載功能正常
+- ✅ UI 顯示與互動皆正常
 
 ⸻
 
