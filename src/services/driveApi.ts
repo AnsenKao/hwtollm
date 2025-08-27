@@ -2,9 +2,18 @@ import { DriveFile, DriveApiResponse } from '../types'
 import { isValidFolderId, isSupportedFileType } from '../utils/helpers'
 
 /**
+ * Common interface for Drive API clients
+ */
+export interface DriveApiClient {
+  listFiles(folderId: string, pageToken?: string): Promise<DriveApiResponse>
+  downloadFile(fileId: string, mimeType?: string): Promise<ArrayBuffer>
+  setAccessToken?(token: string): void
+}
+
+/**
  * Mock Google Drive API for development and testing
  */
-export class MockDriveApi {
+export class MockDriveApi implements DriveApiClient {
   private mockFiles: DriveFile[] = [
     {
       id: '1a2b3c4d5e6f7g8h9i0j',
@@ -92,12 +101,16 @@ AI技術能夠顯著提升教育效率，但仍需要人為監督和調整。`
 
     return new TextEncoder().encode(mockContent).buffer
   }
+
+  setAccessToken(_token: string): void {
+    // Mock implementation does nothing
+  }
 }
 
 /**
  * Real Google Drive API client
  */
-export class GoogleDriveApi {
+export class GoogleDriveApi implements DriveApiClient {
   private accessToken: string | null = null
 
   constructor(accessToken?: string) {
@@ -143,6 +156,7 @@ export class GoogleDriveApi {
       fields: 'files(id,name,size,mimeType,parents,webViewLink,webContentLink,modifiedTime),nextPageToken,incompleteSearch',
       supportsAllDrives: 'true',
       includeItemsFromAllDrives: 'true',
+      pageSize: '100', // 增加每頁檔案數量限制，預設是10，我們設為100
     })
 
     if (pageToken) {
@@ -208,7 +222,7 @@ export class GoogleDriveApi {
 }
 
 // Factory function to get the appropriate API client
-export function createDriveApiClient(useMock: boolean = false, accessToken?: string) {
+export function createDriveApiClient(useMock: boolean = false, accessToken?: string): DriveApiClient {
   if (useMock) {
     return new MockDriveApi()
   }

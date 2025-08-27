@@ -44,7 +44,7 @@ Milestone 2：Drive API 整合 ✅ COMPLETED
 
 Milestone 3：AnythingLLM 接口與 JSON Schema 驗證
 	•	定義 Grade JSON Schema（Zod）
-	•	建立呼叫 AnythingLLM /api/grade API 模組
+	•	建立呼叫 AnythingLLM API 模組 可以參考 openapi.json
 	•	驗證回傳 JSON 是否符合 Schema（不符 → 標記錯誤）
 	•	UI 顯示每檔案的處理狀態（Queued / Running / Done / Failed）
 

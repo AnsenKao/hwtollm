@@ -4,7 +4,9 @@ import { useState } from 'react'
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { extractFolderId, validateUrl } from '@/utils/helpers'
 import { createDriveApiClient } from '@/services/driveApi'
-import { DriveFile } from '@/types'
+import { DriveFile, AnythingLlmConfig } from '@/types'
+import AnythingLlmConfigPanel from '@/components/AnythingLlmConfigPanel'
+import GradingPanel from '@/components/GradingPanel'
 
 export default function HomePage() {
   const { data: session, status } = useSession()
@@ -15,6 +17,17 @@ export default function HomePage() {
   const [files, setFiles] = useState<DriveFile[]>([])
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
   const [downloadingFiles, setDownloadingFiles] = useState<Set<string>>(new Set())
+  
+  // AnythingLLM configuration
+  const [anythingLlmConfig, setAnythingLlmConfig] = useState<AnythingLlmConfig>({
+    baseUrl: 'http://localhost:3001/api/v1',
+    apiKey: 'PQ6CXJ4-CB0M8SD-PP19TMV-08085ST',
+    temperature: 0.1,
+    maxHistory: 5
+  })
+  
+  // UI state
+  const [activeTab, setActiveTab] = useState<'files' | 'config' | 'grading'>('files')
 
   const handleGetFiles = async () => {
     if (!folderUrl.trim()) {
@@ -50,6 +63,8 @@ export default function HomePage() {
       const driveApi = createDriveApiClient(false, accessToken)
       const response = await driveApi.listFiles(extractedId)
       setFiles(response.files)
+      // 預設全選所有檔案
+      setSelectedFiles(new Set(response.files.map(file => file.id)))
       console.log('Retrieved files:', response.files)
     } catch (err) {
       setError(err instanceof Error ? err.message : '獲取檔案列表時發生錯誤')
@@ -207,154 +222,193 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Input Section */}
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Google Drive 資料夾 URL
-              </label>
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={folderUrl}
-                  onChange={(e) => setFolderUrl(e.target.value)}
-                  placeholder="貼上 Google Drive 共享資料夾的 URL..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <button
-                  onClick={handleGetFiles}
-                  disabled={loading}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? '載入中...' : '獲取檔案'}
-                </button>
-              </div>
-            </div>
-
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
-            )}
+          {/* Tab Navigation */}
+          <div className="flex space-x-1 mb-6">
+            <button
+              onClick={() => setActiveTab('files')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                activeTab === 'files'
+                  ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              檔案管理
+            </button>
+            <button
+              onClick={() => setActiveTab('config')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                activeTab === 'config'
+                  ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              AnythingLLM 設定
+            </button>
+            <button
+              onClick={() => setActiveTab('grading')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                activeTab === 'grading'
+                  ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              評分系統
+            </button>
           </div>
+        </div>
 
-          {/* Files List */}
-          {files.length > 0 && (
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium text-gray-900">
-                  檔案列表 ({files.length} 個檔案)
-                </h2>
-                <div className="flex items-center space-x-4">
+        {/* Tab Content */}
+        {activeTab === 'files' && (
+          <div className="bg-white rounded-lg shadow-md p-6">
+            {/* Input Section */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Google Drive 資料夾 URL
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={folderUrl}
+                    onChange={(e) => setFolderUrl(e.target.value)}
+                    placeholder="貼上 Google Drive 共享資料夾的 URL..."
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
                   <button
-                    onClick={handleSelectAll}
-                    className="px-3 py-1 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100"
+                    onClick={handleGetFiles}
+                    disabled={loading}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {selectedFiles.size === files.length ? '取消全選' : '全選'}
+                    {loading ? '載入中...' : '獲取檔案'}
                   </button>
-                  <div className="text-sm text-gray-500">
-                    資料夾 ID: {folderId}
-                  </div>
                 </div>
               </div>
 
-              <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-                <table className="min-w-full divide-y divide-gray-300">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
-                        <input
-                          type="checkbox"
-                          checked={files.length > 0 && selectedFiles.size === files.length}
-                          onChange={handleSelectAll}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
-                        檔案名稱
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
-                        類型
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
-                        大小
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
-                        修改時間
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
-                        操作
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {files.map((file) => (
-                      <tr key={file.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <input
-                            type="checkbox"
-                            checked={selectedFiles.has(file.id)}
-                            onChange={() => handleFileSelect(file.id)}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                          />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {file.name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {file.mimeType.includes('pdf') ? 'PDF' :
-                           file.mimeType.includes('word') ? 'Word' :
-                           file.mimeType.includes('image') ? 'Image' : 'Other'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatFileSize(file.size)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(file.modifiedTime)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button
-                            onClick={() => handleFileDownload(file)}
-                            disabled={downloadingFiles.has(file.id)}
-                            className="text-blue-600 hover:text-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {downloadingFiles.has(file.id) ? '下載中...' : '下載'}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {selectedFiles.size > 0 && (
-                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-                  <p className="text-blue-800 text-sm">
-                    <strong>已選擇 {selectedFiles.size} 個檔案</strong>
-                  </p>
-                  <p className="text-blue-600 text-xs mt-1">
-                    在下一個版本中，這些檔案將會送至 AnythingLLM 進行評分
-                  </p>
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-red-700 text-sm">{error}</p>
                 </div>
               )}
             </div>
-          )}
-        </div>
 
-        {/* Development Info */}
-        <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-md">
-          <h3 className="text-lg font-medium text-blue-800 mb-2">
-            🛠️ HW to LLM - Google Classroom 作業評分系統
-          </h3>
-          <ul className="text-blue-700 text-sm space-y-1">
-            <li>• ✅ Google OAuth 認證整合</li>
-            <li>• ✅ Google Drive API 連接</li>
-            <li>• ✅ 檔案列表顯示和下載</li>
-            <li>• ✅ 檔案選擇和批量處理</li>
-            <li>• 💡 <a href="/auth" className="text-blue-600 hover:text-blue-800 underline font-medium">管理Google帳戶認證</a></li>
-            <li>• 🔄 下一步: AnythingLLM API 整合 (自動評分)</li>
-          </ul>
-        </div>
+            {/* Files List */}
+            {files.length > 0 && (
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-medium text-gray-900">
+                    檔案列表 ({files.length} 個檔案)
+                  </h2>
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={handleSelectAll}
+                      className="px-3 py-1 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100"
+                    >
+                      {selectedFiles.size === files.length ? '取消全選' : '全選'}
+                    </button>
+                    <div className="text-sm text-gray-500">
+                      資料夾 ID: {folderId}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                  <table className="min-w-full divide-y divide-gray-300">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                          <input
+                            type="checkbox"
+                            checked={files.length > 0 && selectedFiles.size === files.length}
+                            onChange={handleSelectAll}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                          檔案名稱
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                          類型
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                          大小
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                          修改時間
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                          操作
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {files.map((file) => (
+                        <tr key={file.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <input
+                              type="checkbox"
+                              checked={selectedFiles.has(file.id)}
+                              onChange={() => handleFileSelect(file.id)}
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {file.name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {file.mimeType.includes('pdf') ? 'PDF' :
+                             file.mimeType.includes('word') ? 'Word' :
+                             file.mimeType.includes('image') ? 'Image' : 'Other'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatFileSize(file.size)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatDate(file.modifiedTime)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button
+                              onClick={() => handleFileDownload(file)}
+                              disabled={downloadingFiles.has(file.id)}
+                              className="text-blue-600 hover:text-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {downloadingFiles.has(file.id) ? '下載中...' : '下載'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {selectedFiles.size > 0 && (
+                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                    <p className="text-blue-800 text-sm">
+                      <strong>已選擇 {selectedFiles.size} 個檔案</strong>
+                    </p>
+                    <p className="text-blue-600 text-xs mt-1">
+                      切換到「評分系統」標籤頁開始評分這些檔案
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'config' && (
+          <AnythingLlmConfigPanel
+            config={anythingLlmConfig}
+            onConfigUpdate={setAnythingLlmConfig}
+          />
+        )}
+
+        {activeTab === 'grading' && (
+          <GradingPanel
+            selectedFiles={files.filter(file => selectedFiles.has(file.id))}
+            anythingLlmConfig={anythingLlmConfig}
+            onConfigUpdate={setAnythingLlmConfig}
+          />
+        )}
       </div>
     </div>
   )

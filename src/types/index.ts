@@ -25,7 +25,6 @@ export interface RubricItem {
 }
 
 export interface GradeResult {
-  fileName: string
   score: number // 0-100
   rubric: RubricItem[]
   comments?: string
@@ -39,13 +38,25 @@ export interface FileProcessingStatus {
   result?: GradeResult
   error?: string
   attempts: number
+  startTime?: Date
+  endTime?: Date
+}
+
+// AnythingLLM Configuration
+export interface AnythingLlmConfig {
+  baseUrl: string
+  apiKey: string
+  workspaceName?: string
+  workspaceSlug?: string
+  temperature?: number
+  maxHistory?: number
+  customPrompt?: string
 }
 
 // Types for UI State
 export interface AppConfig {
   googleClientId: string
-  anythingLlmApiUrl: string
-  anythingLlmApiKey: string
+  anythingLlm: AnythingLlmConfig
   maxConcurrency: number
   timeoutMs: number
   retryAttempts: number
