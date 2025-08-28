@@ -1,0 +1,31 @@
+services:
+  hwtollm:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    environment:
+      # Next.js 環境變數
+      - NODE_ENV=production
+      
+    restart: unless-stopped
+    networks:
+      - hwtollm-network
+
+  # 如果您有 AnythingLLM 服務，可以取消註釋下面的配置
+  # anythingllm:
+  #   image: mintplexlabs/anythingllm:latest
+  #   ports:
+  #     - "3001:3001"
+  #   environment:
+  #     - STORAGE_DIR=/app/storage
+  #   volumes:
+  #     - ./anythingllm-storage:/app/storage
+  #   restart: unless-stopped
+  #   networks:
+  #     - hwtollm-network
+
+networks:
+  hwtollm-network:
+    driver: bridge
