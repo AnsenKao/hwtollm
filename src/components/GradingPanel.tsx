@@ -45,6 +45,7 @@ export default function GradingPanel({
 
   const [showWorkspaceForm, setShowWorkspaceForm] = useState(false)
   const [newWorkspaceName, setNewWorkspaceName] = useState('')
+  const [showCsvPreview, setShowCsvPreview] = useState(false)
 
   useEffect(() => {
     actions.checkConnections()
@@ -89,6 +90,55 @@ export default function GradingPanel({
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+  }
+
+  const handlePreviewCsv = () => {
+    setShowCsvPreview(!showCsvPreview)
+  }
+
+  const handleCopyCsv = async () => {
+    try {
+      const csv = actions.exportResults()
+      await navigator.clipboard.writeText(csv)
+      alert('CSV 內容已複製到剪貼簿！可以直接貼到 Excel 中。')
+    } catch (err) {
+      console.error('複製失敗:', err)
+      alert('複製失敗，請手動選取文字複製。')
+    }
+  }
+
+  const convertCsvToTable = (csvText: string) => {
+    const lines = csvText.split('\n').filter(line => line.trim())
+    if (lines.length === 0) return []
+    
+    return lines.map(line => {
+      // 簡單的 CSV 解析（處理引號包圍的字段）
+      const fields = []
+      let currentField = ''
+      let inQuotes = false
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i]
+        
+        if (char === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            // 雙引號轉義
+            currentField += '"'
+            i++ // 跳過下一個引號
+          } else {
+            inQuotes = !inQuotes
+          }
+        } else if (char === ',' && !inQuotes) {
+          fields.push(currentField)
+          currentField = ''
+        } else {
+          currentField += char
+        }
+      }
+      fields.push(currentField) // 添加最後一個字段
+      
+      return fields
+    })
   }
 
   const getStatusColor = (status: string) => {
@@ -319,12 +369,30 @@ export default function GradingPanel({
           )}
           
           {state.processingProgress && state.processingProgress.completed > 0 && (
-            <button
-              onClick={handleExport}
-              className="px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-            >
-              匯出結果
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={handlePreviewCsv}
+                className={`px-6 py-2 rounded transition-colors ${
+                  showCsvPreview 
+                    ? 'bg-gray-500 text-white hover:bg-gray-600' 
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                }`}
+              >
+                {showCsvPreview ? '隱藏預覽' : '預覽結果'}
+              </button>
+              <button
+                onClick={handleCopyCsv}
+                className="px-6 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
+              >
+                📋 複製 CSV
+              </button>
+              <button
+                onClick={handleExport}
+                className="px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+              >
+                📁 下載 CSV
+              </button>
+            </div>
           )}
         </div>
 
@@ -372,7 +440,79 @@ export default function GradingPanel({
             </div>
           </div>
         )}
+
+        {/* CSV 預覽區域 */}
+        {showCsvPreview && state.processingProgress && state.processingProgress.completed > 0 && (
+          <div className="bg-white p-6 rounded-lg shadow">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">📊 CSV 結果預覽</h3>
+              <div className="flex space-x-2">
+                <button
+                  onClick={handleCopyCsv}
+                  className="px-3 py-1 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
+                >
+                  📋 複製
+                </button>
+                <button
+                  onClick={handleExport}
+                  className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600"
+                >
+                  📁 下載
+                </button>
+              </div>
+            </div>
+            
+            {/* 表格預覽 */}
+            <div className="mb-4">
+              <h4 className="text-sm font-medium mb-2 text-gray-700">表格預覽：</h4>
+              <div className="overflow-auto max-h-80 border rounded bg-gray-50">
+                <table className="min-w-full text-sm">
+                  <tbody>
+                    {(() => {
+                      const csv = actions.exportResults()
+                      return convertCsvToTable(csv).map((row, rowIndex) => (
+                        <tr key={rowIndex} className={rowIndex === 0 ? 'bg-blue-50 font-medium sticky top-0' : 'hover:bg-white'}>
+                          {row.map((cell, cellIndex) => (
+                            <td key={cellIndex} className="px-3 py-2 border-b text-left border-gray-200">
+                              <div className="max-w-xs" title={cell}>
+                                {cellIndex === 2 ? ( // 評語欄位
+                                  <div className="max-w-md max-h-20 overflow-y-auto text-xs leading-tight">
+                                    {cell}
+                                  </div>
+                                ) : (
+                                  <div className="truncate">
+                                    {cell}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          ))}
+                        </tr>
+                      ))
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 原始 CSV 文字 */}
+            <div>
+              <h4 className="text-sm font-medium mb-2 text-gray-700">原始 CSV 內容：</h4>
+              <textarea
+                value={actions.exportResults()}
+                readOnly
+                className="w-full h-32 p-3 border rounded font-mono text-xs bg-gray-50 resize-none"
+                placeholder="沒有結果可顯示"
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                💡 提示：您可以直接複製這些內容並貼到 Excel 或 Google Sheets 中
+              </p>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* 移除模態視窗相關的代碼 */}
     </div>
   )
 }
