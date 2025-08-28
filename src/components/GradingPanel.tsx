@@ -21,10 +21,9 @@ const DEFAULT_GRADING_PROMPT = `你是一位專業的作業評分助教。請根
 
 請提供：
 1. 總分 (0-100)
-2. 各項目細分評分
-3. 具體的評語和建議
+2. 具體的評語和建議，包含各評分項目的分析
 
-請確保評分客觀公正，並提供建設性的回饋。`
+請確保評分客觀公正，並提供建設性的回饋。評語應該詳細說明各項目的表現。`
 
 interface GradingPanelProps {
   selectedFiles: DriveFile[]
@@ -126,6 +125,15 @@ export default function GradingPanel({
             <span>Google Drive</span>
           </div>
         </div>
+        
+        {(!anythingLlmConfig.baseUrl || !anythingLlmConfig.apiKey) && (
+          <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
+            <div className="text-sm text-yellow-800">
+              ⚠️ AnythingLLM 尚未配置，請先到「LLM設定」頁面完成配置
+            </div>
+          </div>
+        )}
+        
         <button 
           onClick={actions.checkConnections}
           className="mt-2 px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"

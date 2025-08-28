@@ -16,28 +16,7 @@ describe('AnythingLLM API', () => {
     it('should validate correct grade result', () => {
       const validGrade = {
         score: 85,
-        rubric: [
-          {
-            key: 'content_quality',
-            desc: '內容品質',
-            weight: 0.4,
-            subScore: 85
-          },
-          {
-            key: 'structure',
-            desc: '結構組織',
-            weight: 0.3,
-            subScore: 80
-          },
-          {
-            key: 'analysis',
-            desc: '分析深度',
-            weight: 0.3,
-            subScore: 90
-          }
-        ],
-        comments: '整體表現良好',
-        meta: {}
+        comments: '整體表現良好，論述清晰，結構完整。內容品質佳，具有一定的分析深度。'
       }
 
       expect(() => GradeSchema.parse(validGrade)).not.toThrow()
@@ -46,24 +25,16 @@ describe('AnythingLLM API', () => {
     it('should reject invalid score range', () => {
       const invalidGrade = {
         score: 150, // Invalid score > 100
-        rubric: [],
         comments: 'test'
       }
 
       expect(() => GradeSchema.parse(invalidGrade)).toThrow()
     })
 
-    it('should reject invalid rubric weight', () => {
+    it('should reject missing comments', () => {
       const invalidGrade = {
-        score: 85,
-        rubric: [
-          {
-            key: 'test',
-            desc: 'test',
-            weight: 1.5, // Invalid weight > 1
-            subScore: 85
-          }
-        ]
+        score: 85
+        // Missing comments
       }
 
       expect(() => GradeSchema.parse(invalidGrade)).toThrow()
@@ -120,12 +91,12 @@ describe('AnythingLLM API', () => {
 
   describe('JSON extraction from LLM response', () => {
     it('should extract JSON from mixed response', () => {
-      const response = '這是一些前導文字 {"score": 85, "rubric": []} 這是一些後續文字'
+      const response = '這是一些前導文字 {"score": 85, "comments": "整體表現良好"} 這是一些後續文字'
       
       // Use reflection to access private method for testing
       const extractedJson = (mockApi as any).extractJsonFromResponse(response)
       
-      expect(extractedJson).toEqual({ score: 85, rubric: [] })
+      expect(extractedJson).toEqual({ score: 85, comments: "整體表現良好" })
     })
 
     it('should throw error when no JSON found', () => {

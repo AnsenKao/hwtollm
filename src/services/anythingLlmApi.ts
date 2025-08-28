@@ -3,14 +3,7 @@ import { z } from 'zod'
 // Grade JSON Schema using Zod
 export const GradeSchema = z.object({
   score: z.number().min(0).max(100),
-  rubric: z.array(z.object({
-    key: z.string(),
-    desc: z.string(),
-    weight: z.number().min(0).max(1),
-    subScore: z.number().min(0).max(100)
-  })),
-  comments: z.string().optional(),
-  meta: z.object({}).optional()
+  comments: z.string()
 })
 
 export type GradeResult = z.infer<typeof GradeSchema>
@@ -272,28 +265,7 @@ ${gradingPrompt}
 請嚴格按照以下 JSON 格式回覆（不要包含任何其他文字）：
 {
   "score": 85,
-  "rubric": [
-    {
-      "key": "content_quality",
-      "desc": "內容品質",
-      "weight": 0.4,
-      "subScore": 85
-    },
-    {
-      "key": "structure",
-      "desc": "結構組織",
-      "weight": 0.3,
-      "subScore": 80
-    },
-    {
-      "key": "analysis",
-      "desc": "分析深度",
-      "weight": 0.3,
-      "subScore": 90
-    }
-  ],
-  "comments": "整體表現良好，論述清晰...",
-  "meta": {}
+  "comments": "整體表現良好，論述清晰，結構完整。內容品質佳，具有一定的分析深度，但在某些論點的支撐上可以更加充實。建議加強引用資料的多樣性和深度分析。"
 }`
 
     const chatRequest: ChatRequest = {
@@ -396,10 +368,9 @@ ${gradingPrompt}
 
 請提供：
 1. 總分 (0-100)
-2. 各項目細分評分
-3. 具體的評語和建議
+2. 具體的評語和建議，包含各評分項目的分析
 
-請確保評分客觀公正，並提供建設性的回饋。`
+請確保評分客觀公正，並提供建設性的回饋。評語應該詳細說明各項目的表現。`
   }
 
   /**

@@ -283,20 +283,19 @@ export class BatchGradingService {
    * Export results to CSV format
    */
   exportToCsv(): string {
-    const successfulResults = this.getSuccessfulResults()
-    
+    const successfulResults = Array.from(this.progress.results.values()).filter(
+      result => result.status === 'done' && result.result
+    )
+
     if (successfulResults.length === 0) {
       return 'No successful results to export'
     }
 
     const headers = [
-      'FileName',
+      'File Name',
       'Score',
-      'ContentQuality',
-      'Structure', 
-      'Analysis',
       'Comments',
-      'ProcessingTime'
+      'Processing Time'
     ]
 
     const rows = successfulResults.map(result => {
@@ -308,9 +307,6 @@ export class BatchGradingService {
       return [
         result.fileName,
         grade.score,
-        grade.rubric.find(r => r.key === 'content_quality')?.subScore || '',
-        grade.rubric.find(r => r.key === 'structure')?.subScore || '',
-        grade.rubric.find(r => r.key === 'analysis')?.subScore || '',
         `"${(grade.comments || '').replace(/"/g, '""')}"`, // Escape quotes
         `${processingTime}s`
       ].join(',')

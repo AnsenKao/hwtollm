@@ -17,18 +17,9 @@ export interface DriveApiResponse {
 }
 
 // Types for Grading System
-export interface RubricItem {
-  key: string
-  desc: string
-  weight: number // 0-1
-  subScore: number // 0-100
-}
-
 export interface GradeResult {
   score: number // 0-100
-  rubric: RubricItem[]
-  comments?: string
-  meta?: object
+  comments: string
 }
 
 export interface FileProcessingStatus {

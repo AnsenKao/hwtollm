@@ -20,8 +20,8 @@ export default function HomePage() {
   
   // AnythingLLM configuration
   const [anythingLlmConfig, setAnythingLlmConfig] = useState<AnythingLlmConfig>({
-    baseUrl: 'http://localhost:3001/api/v1',
-    apiKey: 'PQ6CXJ4-CB0M8SD-PP19TMV-08085ST',
+    baseUrl: process.env.NEXT_PUBLIC_ANYTHINGLLM_API_URL || '',
+    apiKey: process.env.NEXT_PUBLIC_ANYTHINGLLM_API_KEY || '',
     temperature: 0.1,
     maxHistory: 5
   })
@@ -235,16 +235,6 @@ export default function HomePage() {
               檔案管理
             </button>
             <button
-              onClick={() => setActiveTab('config')}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                activeTab === 'config'
-                  ? 'bg-blue-100 text-blue-700 border border-blue-300'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              AnythingLLM 設定
-            </button>
-            <button
               onClick={() => setActiveTab('grading')}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                 activeTab === 'grading'
@@ -253,6 +243,16 @@ export default function HomePage() {
               }`}
             >
               評分系統
+            </button>
+            <button
+              onClick={() => setActiveTab('config')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                activeTab === 'config'
+                  ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              AnythingLLM 設定
             </button>
           </div>
         </div>

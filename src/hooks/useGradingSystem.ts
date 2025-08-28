@@ -249,6 +249,24 @@ export function useGradingSystem(
   const checkConnections = useCallback(async () => {
     updateState({ error: null })
 
+    // 首先驗證配置是否完整
+    if (!options.anythingLlmConfig.baseUrl || !options.anythingLlmConfig.apiKey) {
+      updateState({
+        connectionStatus: { anythingLlm: false, googleDrive: !!session?.accessToken },
+        error: 'AnythingLLM 配置不完整，請先到設定頁面完成配置'
+      })
+      return
+    }
+
+    // 驗證 API URL 格式
+    if (!options.anythingLlmConfig.baseUrl.includes('/api')) {
+      updateState({
+        connectionStatus: { anythingLlm: false, googleDrive: !!session?.accessToken },
+        error: 'AnythingLLM API URL 格式錯誤，應該包含 /api 路徑（例如：http://localhost:3001/api/v1）'
+      })
+      return
+    }
+
     const results = await Promise.allSettled([
       anythingLlmRef.current.verifyAuth(),
       // For Google Drive, we'll check if we have a valid session
@@ -257,6 +275,20 @@ export function useGradingSystem(
 
     const anythingLlmStatus = results[0].status === 'fulfilled' ? results[0].value : false
     const googleDriveStatus = results[1].status === 'fulfilled' ? results[1].value : false
+
+    // 如果 AnythingLLM 連接失敗，提供更詳細的錯誤訊息
+    if (results[0].status === 'rejected') {
+      const error = results[0].reason
+      console.error('AnythingLLM connection error:', error)
+      
+      if (error?.message?.includes('Failed to parse response JSON')) {
+        updateState({
+          connectionStatus: { anythingLlm: false, googleDrive: googleDriveStatus },
+          error: 'AnythingLLM API 連接失敗：收到非 JSON 回應，請檢查 API URL 是否正確，或確認 AnythingLLM 服務是否正常運行'
+        })
+        return
+      }
+    }
 
     updateState({
       connectionStatus: {
