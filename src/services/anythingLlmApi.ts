@@ -69,6 +69,9 @@ export class AnythingLlmApi {
     this.headers = {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
+      // 添加 ngrok 繞過標頭
+      'ngrok-skip-browser-warning': 'true',
+      'User-Agent': 'HWToLLM-Client/1.0'
     }
   }
 
@@ -82,16 +85,12 @@ export class AnythingLlmApi {
     if (options.body && typeof options.body === 'string') {
       try {
         JSON.parse(options.body)
-        console.log(`✅ JSON 驗證通過，請求大小: ${options.body.length} 字元`)
       } catch (error) {
         console.error(`❌ JSON 格式錯誤:`, error)
         console.error(`❌ 請求內容:`, options.body.substring(0, 500) + '...')
         throw new Error(`Invalid JSON in request body: ${error}`)
       }
     }
-    
-    console.log(`🌐 發送請求到: ${url}`)
-    console.log(`📦 請求方法: ${options.method || 'GET'}`)
     
     const response = await fetch(url, {
       ...options,
@@ -100,8 +99,6 @@ export class AnythingLlmApi {
         ...options.headers,
       },
     })
-
-    console.log(`📡 回應狀態: ${response.status} ${response.statusText}`)
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -114,7 +111,6 @@ export class AnythingLlmApi {
     
     try {
       const result = JSON.parse(responseText)
-      console.log(`✅ 成功解析回應 JSON`)
       return result
     } catch (error) {
       console.error(`❌ 無法解析回應 JSON:`, error)
@@ -219,6 +215,8 @@ export class AnythingLlmApi {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
+          'ngrok-skip-browser-warning': 'true',
+          'User-Agent': 'HWToLLM-Client/1.0',
           // 不要設置 Content-Type，讓瀏覽器自動設置 multipart/form-data boundary
         },
         body: formData
@@ -416,7 +414,11 @@ ${gradingPrompt}`
 
     const response = await fetch(`${this.baseUrl}/v1/workspace/${workspaceSlug}/stream-chat`, {
       method: 'POST',
-      headers: this.headers,
+      headers: {
+        ...this.headers,
+        'ngrok-skip-browser-warning': 'true',
+        'User-Agent': 'HWToLLM-Client/1.0'
+      },
       body: JSON.stringify(chatRequest)
     })
 

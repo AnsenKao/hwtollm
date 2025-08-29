@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import GradingPanel from '../../components/GradingPanel'
 import { DriveFile, AnythingLlmConfig } from '../../types'
@@ -15,6 +15,32 @@ export default function AnythingLLMTestPage() {
     temperature: 0.1,
     maxHistory: 5
   })
+
+  // 載入運行時配置
+  useEffect(() => {
+    const loadRuntimeConfig = async () => {
+      try {
+        const response = await fetch('/api/config')
+        const runtimeConfig = await response.json()
+        
+        setAnythingLlmConfig(prev => ({
+          ...prev,
+          baseUrl: runtimeConfig.NEXT_PUBLIC_ANYTHINGLLM_API_URL || 'http://localhost:3001/api',
+          apiKey: runtimeConfig.NEXT_PUBLIC_ANYTHINGLLM_API_KEY || '',
+        }))
+      } catch (error) {
+        console.error('載入運行時配置失敗:', error)
+        // 回退到靜態環境變數
+        setAnythingLlmConfig(prev => ({
+          ...prev,
+          baseUrl: process.env.NEXT_PUBLIC_ANYTHINGLLM_API_URL || 'http://localhost:3001/api',
+          apiKey: process.env.NEXT_PUBLIC_ANYTHINGLLM_API_KEY || '',
+        }))
+      }
+    }
+
+    loadRuntimeConfig()
+  }, [])
 
   // Mock files for testing
   const mockFiles: DriveFile[] = [

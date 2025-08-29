@@ -21,18 +21,43 @@ export default function AnythingLlmConfigPanel({
 
   // Load from environment variables
   useEffect(() => {
-    const envConfig: AnythingLlmConfig = {
-      baseUrl: process.env.NEXT_PUBLIC_ANYTHINGLLM_API_URL || 'http://localhost:3001/api',
-      apiKey: process.env.NEXT_PUBLIC_ANYTHINGLLM_API_KEY || '',
-      workspaceName: config.workspaceName,
-      workspaceSlug: config.workspaceSlug,
-      temperature: config.temperature || 0.1,
-      maxHistory: config.maxHistory || 5,
-      customPrompt: config.customPrompt || ''
+    const loadRuntimeConfig = async () => {
+      try {
+        // 從運行時 API 獲取環境變數
+        const response = await fetch('/api/config')
+        const runtimeConfig = await response.json()
+        
+        const envConfig: AnythingLlmConfig = {
+          baseUrl: runtimeConfig.NEXT_PUBLIC_ANYTHINGLLM_API_URL || 'http://localhost:3001/api',
+          apiKey: runtimeConfig.NEXT_PUBLIC_ANYTHINGLLM_API_KEY || '',
+          workspaceName: config.workspaceName,
+          workspaceSlug: config.workspaceSlug,
+          temperature: config.temperature || 0.1,
+          maxHistory: config.maxHistory || 5,
+          customPrompt: config.customPrompt || ''
+        }
+
+        setLocalConfig(envConfig)
+        onConfigUpdate(envConfig)
+      } catch (error) {
+        console.error('載入運行時配置失敗:', error)
+        // 如果 API 失敗，回退到靜態環境變數
+        const envConfig: AnythingLlmConfig = {
+          baseUrl: process.env.NEXT_PUBLIC_ANYTHINGLLM_API_URL || 'http://localhost:3001/api',
+          apiKey: process.env.NEXT_PUBLIC_ANYTHINGLLM_API_KEY || '',
+          workspaceName: config.workspaceName,
+          workspaceSlug: config.workspaceSlug,
+          temperature: config.temperature || 0.1,
+          maxHistory: config.maxHistory || 5,
+          customPrompt: config.customPrompt || ''
+        }
+
+        setLocalConfig(envConfig)
+        onConfigUpdate(envConfig)
+      }
     }
 
-    setLocalConfig(envConfig)
-    onConfigUpdate(envConfig)
+    loadRuntimeConfig()
   }, [])
 
   const handleConfigChange = (field: keyof AnythingLlmConfig, value: any) => {
@@ -127,7 +152,7 @@ export default function AnythingLlmConfigPanel({
               type="text"
               value={localConfig.baseUrl}
               onChange={(e) => handleConfigChange('baseUrl', e.target.value)}
-              placeholder="http://localhost:3001/api/v1"
+              placeholder="https://your-ngrok-url.ngrok-free.app/api"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

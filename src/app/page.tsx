@@ -55,17 +55,11 @@ export default function HomePage() {
       
       const accessToken = session?.accessToken
       
-      console.log('API call details:', {
-        hasSession: !!session,
-        hasAccessToken: !!accessToken,
-      })
-      
       const driveApi = createDriveApiClient(false, accessToken)
       const response = await driveApi.listFiles(extractedId)
       setFiles(response.files)
       // 預設全選所有檔案
       setSelectedFiles(new Set(response.files.map(file => file.id)))
-      console.log('Retrieved files:', response.files)
     } catch (err) {
       setError(err instanceof Error ? err.message : '獲取檔案列表時發生錯誤')
       console.error('Error fetching files:', err)

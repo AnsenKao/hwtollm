@@ -15,7 +15,9 @@ RUN npm ci --only=production
 
 # 建構階段
 FROM base AS builder
+
 COPY . .
+
 # 安裝所有依賴（包括 devDependencies）
 RUN npm ci
 # 建構應用

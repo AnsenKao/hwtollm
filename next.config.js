@@ -6,8 +6,7 @@ const nextConfig = {
   env: {
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-    ANYTHING_LLM_API_URL: process.env.ANYTHING_LLM_API_URL,
-    ANYTHING_LLM_API_KEY: process.env.ANYTHING_LLM_API_KEY,
+    // NEXT_PUBLIC_ 環境變數會自動在客戶端可用，不需要在這裡配置
   },
 }
 
